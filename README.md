@@ -50,7 +50,7 @@ Support
 Limited free support available in the comments on [this page] [1] for this script
 or via email. Contracted support available for specific projects.
 
-    [1]: http://stuporglue.org/mailreader-php-parse-e-mail-and-save-attachments-php-version-2/ "this page"
+  [1]: http://stuporglue.org/mailreader-php-parse-e-mail-and-save-attachments-php-version-2/ "this page"
 
 
 Thanks
