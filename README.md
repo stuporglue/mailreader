@@ -5,11 +5,19 @@ Recieve mail and attachments with PHP
 
 Usage
 -------------------------------------
-This script expects to recieve raw emails via STDIN.
+mailReader.php contains the class that works with the incoming email. 
+
+mailPipe.php is a sample script using the mailReader class.
+
+
+mailPipe.php expects to recieve raw emails via STDIN.
 
 You can run the script manually by using cat
 
-    cat testfile.txt | ./mailReader.php
+    cat testfile.txt | ./mailPipe.php
+
+You will likely want to copy mailPipe.php to your own script and adjust
+the parameters to suite your needs.
 
 
 Requirements
@@ -59,4 +67,9 @@ Many thanks to forahobby of www.360-hq.com for testing this script and helping m
 the initial bugs and Craig Hopson of twitterrooms.co.uk for help tracking down an iOS email handling bug.
 
 
-
+Versions
+-------------------------------------
+May 21, 2013
+* UUEncoded attachment support
+* It's now a class
+* Uses PHP PDO connection with prepared statements instead of mysql/mysql_real_escape_string
