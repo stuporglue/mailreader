@@ -83,6 +83,19 @@ class mailReader {
             }
         }
 
+        if($this->decoded->disposition == 'inline'){
+            $mimeType = "{$this->decoded->ctype_primary}/{$this->decoded->ctype_secondary}"; 
+
+            if(isset($this->decoded->d_parameters) &&  array_key_exists('filename',$this->decoded->d_parameters)){
+                $filename = $this->decoded->d_parameters['filename'];
+            }else{
+                $filename = 'file';
+            }
+
+            $this->saveFile($filename,$this->decoded->body,$mimeType);
+            $this->body = "Body was a binary";
+        }
+
         // We might also have uuencoded files. Check for those.
         if(!isset($this->body)){
            if(isset($this->decoded->body)){
@@ -92,9 +105,11 @@ class mailReader {
            }
         }
 
-        foreach($decoder->uudecode($this->body) as $file){
-            // file = Array('filename' => $filename, 'fileperm' => $fileperm, 'filedata' => $filedata)
-            $this->saveFile($file['filename'],$file['filedata']);
+        if(preg_match_all("/begin ([0-7]{3}) (.+)\r?\n(.+)\r?\nend/Us", $this->body) > 0){
+            foreach($decoder->uudecode($this->body) as $file){
+                // file = Array('filename' => $filename, 'fileperm' => $fileperm, 'filedata' => $filedata)
+                $this->saveFile($file['filename'],$file['filedata']);
+            }
         }
         
 

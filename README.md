@@ -73,6 +73,7 @@ May 21, 2013
 * UUEncoded attachment support
 * It's now a class
 * Uses PHP PDO connection with prepared statements instead of mysql/mysql_real_escape_string
+* Support for inline content type (from mail app on mac?)
 
 April 14, 2012
 * Uses PEAR's mimeDecode.php
