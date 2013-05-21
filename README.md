@@ -55,10 +55,10 @@ Use at your own risk. No guarantees or warranties.
 
 Support
 -------------------------------------
-Limited free support available in the comments on [this page] [1] for this script
+Limited free support available in the comments on the latest blog post on [this page] [1] for this script
 or via email. Contracted support available for specific projects.
 
-  [1]: http://stuporglue.org/mailreader-php-parse-e-mail-and-save-attachments-php-version-2/ "this page"
+  [1]: http://stuporglue.org/tag/mailreader-php/ "this page"
 
 
 Thanks
@@ -73,3 +73,12 @@ May 21, 2013
 * UUEncoded attachment support
 * It's now a class
 * Uses PHP PDO connection with prepared statements instead of mysql/mysql_real_escape_string
+
+April 14, 2012
+* Uses PEAR's mimeDecode.php
+* Support for more mime part configurations
+
+March 24, 2010
+* Initial release
+* Works for me, for Gmail.
+* Homemade parser!
