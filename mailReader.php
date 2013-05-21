@@ -243,18 +243,29 @@ class mailReader {
      * @brief Save the plain text, subject and sender of an email to the database
      */
     private function saveToDb(){
-        $insert = $this->pdo->prepare("INSERT INTO emails (from,subject,body) VALUES (?,?,?)");
+        $insert = $this->pdo->prepare("INSERT INTO emails (fromaddr,subject,body) VALUES (?,?,?)");
         if(!$insert->execute(Array($this->from_email,$this->subject,$this->body))){
+            if($this->debug){
+                print_r($insert->errorInfo());
+            }
             die("INSERT INTO emails failed!");
         }
-        $email_id = array_pop(array_values($insert->fetch(PDO::FETCH_ASSOC)));
+        $email_id = $this->pdo->lastInsertId();
 
 
-        $insertFile = $this->pdo->prepare("INSERT INTO files (email_id,filename,size,mime) VALUES (?,?,?,?)");
+        $insertFile = $this->pdo->prepare("INSERT INTO files (email_id,filename,mailsize,mime) VALUES (:email_id,:filename,:size,:mime)");
         foreach($this->saved_files as $f => $data){
-            $insertFile->bindParam($email_id,$f,$data['size'],$data['mime']);
+            $insertFile->bindParam(':email_id',$email_id);
+            $insertFile->bindParam(':filename',$f);
+            $insertFile->bindParam(':size',$data['size']);
+            $insertFile->bindParam(':mime',$data['mime']);
         }
-        $insertFile->execute();
+        if(!$insertFile->execute()){
+            if($this->debug){
+                print_r($insertFile->errorInfo());
+            }
+            die("Insert file info failed!");
+        }
     }
 
     /**

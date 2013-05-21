@@ -50,6 +50,6 @@ $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8",$db_un,$db_pas
 $allowed_senders = Array('myemail@example.com', 'whatever@example.com');
 
 $mr = new mailReader($save_directory,$allowed_senders,$pdo);
-// $mr->save_msg_to_db = TRUE;
-// $mr->send_email = TRUE;
+$mr->save_msg_to_db = TRUE;
+$mr->send_email = TRUE;
 $mr->readEmail();
