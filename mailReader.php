@@ -105,7 +105,7 @@ class mailReader {
            }
         }
 
-        if(preg_match_all("/begin ([0-7]{3}) (.+)\r?\n(.+)\r?\nend/Us", $this->body) > 0){
+        if(preg_match("/begin ([0-7]{3}) (.+)\r?\n(.+)\r?\nend/Us", $this->body) > 0){
             foreach($decoder->uudecode($this->body) as $file){
                 // file = Array('filename' => $filename, 'fileperm' => $fileperm, 'filedata' => $filedata)
                 $this->saveFile($file['filename'],$file['filedata']);
