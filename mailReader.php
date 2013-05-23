@@ -37,7 +37,7 @@ class mailReader {
      */
     public function __construct($save_directory,$allowed_senders,$pdo = NULL){
         if(!preg_match('|/$|',$save_directory)){ $save_directory .= '/'; } // add trailing slash if needed
-        $this->saved_directory = $save_directory;
+        $this->save_directory = $save_directory;
         $this->allowed_senders = $allowed_senders;
         $this->pdo = $pdo;
     }
