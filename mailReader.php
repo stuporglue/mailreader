@@ -37,7 +37,7 @@ class mailReader {
      */
     public function __construct($save_directory,$allowed_senders,$pdo = NULL){
         if(!preg_match('|/$|',$save_directory)){ $save_directory .= '/'; } // add trailing slash if needed
-        $this->save_directory = $save_directory;
+            $this->save_directory = $save_directory;
         $this->allowed_senders = $allowed_senders;
         $this->pdo = $pdo;
     }
@@ -98,11 +98,11 @@ class mailReader {
 
         // We might also have uuencoded files. Check for those.
         if(!isset($this->body)){
-           if(isset($this->decoded->body)){
+            if(isset($this->decoded->body)){
                 $this->body = $this->decoded->body;
-           }else{
+            }else{
                 $this->body = "No plain text body found";
-           }
+            }
         }
 
         if(preg_match("/begin ([0-7]{3}) (.+)\r?\n(.+)\r?\nend/Us", $this->body) > 0){
@@ -111,7 +111,7 @@ class mailReader {
                 $this->saveFile($file['filename'],$file['filedata']);
             }
         }
-        
+
 
         // Put the results in the database if needed
         if($this->save_msg_to_db && !is_null($this->pdo)){
@@ -155,47 +155,61 @@ class mailReader {
 
         $mimeType = "{$body_part->ctype_primary}/{$body_part->ctype_secondary}"; 
 
-        switch($body_part->ctype_primary){
+        switch($body_part->ctype_primary)
+        {
         case 'text':
-            switch($body_part->ctype_secondary){
+            switch($body_part->ctype_secondary)
+            {
             case 'plain':
                 $this->body = $body_part->body; // If there are multiple text/plain parts, we will only get the last one.
                 break;
             }
             break;
-            case 'application':
-                switch ($body_part->ctype_secondary){
-                case 'pdf': // save these file types
-                case 'zip':
-                case 'octet-stream':
-                    $this->saveFile($filename,$body_part->body,$mimeType);
-                    break;
-                default:
-                    // anything else (exe, rar, etc.) will faill into this hole and die
-                    break;
-                }
-            break;
-            case 'image':
-                switch($body_part->ctype_secondary){
-                case 'jpeg': // Save these image types
-                case 'png':
-                case 'gif':
-                    $this->saveFile($filename,$body_part->body,$mimeType);
-                    break;
-                default:
-                    break;
-                }
-            break;
-            case 'multipart':
-                if(is_array($body_part->parts)){
-                    foreach($body_part->parts as $ix => $sub_part){
-                        $this->decodePart($sub_part);
-                    }
-                }
+        case 'audio':
+            switch($body_part->ctype_secondary)
+            {
+            case 'x-wav': // Save these image types
+                saveFile($filename,$body_part->body,$mimeType);
                 break;
             default:
-                // anything else isn't handled
                 break;
+            }
+            break;
+        case 'application':
+            switch ($body_part->ctype_secondary)
+            {
+            case 'pdf': // save these file types
+            case 'zip':
+            case 'octet-stream':
+                $this->saveFile($filename,$body_part->body,$mimeType);
+                break;
+            default:
+                // anything else (exe, rar, etc.) will faill into this hole and die
+                break;
+            }
+            break;
+        case 'image':
+            switch($body_part->ctype_secondary)
+            {
+            case 'jpeg': // Save these image types
+            case 'png':
+            case 'gif':
+                $this->saveFile($filename,$body_part->body,$mimeType);
+                break;
+            default:
+                break;
+            }
+            break;
+        case 'multipart':
+            if(is_array($body_part->parts)){
+                foreach($body_part->parts as $ix => $sub_part){
+                    $this->decodePart($sub_part);
+                }
+            }
+            break;
+        default:
+            // anything else isn't handled
+            break;
         }
     }
 
@@ -268,18 +282,20 @@ class mailReader {
         $email_id = $this->pdo->lastInsertId();
 
 
-        $insertFile = $this->pdo->prepare("INSERT INTO files (email_id,filename,mailsize,mime) VALUES (:email_id,:filename,:size,:mime)");
-        foreach($this->saved_files as $f => $data){
-            $insertFile->bindParam(':email_id',$email_id);
-            $insertFile->bindParam(':filename',$f);
-            $insertFile->bindParam(':size',$data['size']);
-            $insertFile->bindParam(':mime',$data['mime']);
-        }
-        if(!$insertFile->execute()){
-            if($this->debug){
-                print_r($insertFile->errorInfo());
+        if(count($this->saved_files) > 0){
+            $insertFile = $this->pdo->prepare("INSERT INTO files (email_id,filename,mailsize,mime) VALUES (:email_id,:filename,:size,:mime)");
+            foreach($this->saved_files as $f => $data){
+                $insertFile->bindParam(':email_id',$email_id);
+                $insertFile->bindParam(':filename',$f);
+                $insertFile->bindParam(':size',$data['size']);
+                $insertFile->bindParam(':mime',$data['mime']);
             }
-            die("Insert file info failed!");
+            if(!$insertFile->execute()){
+                if($this->debug){
+                    print_r($insertFile->errorInfo());
+                }
+                die("Insert file info failed!");
+            }
         }
     }
 
