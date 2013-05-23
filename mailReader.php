@@ -168,8 +168,8 @@ class mailReader {
         case 'audio':
             switch($body_part->ctype_secondary)
             {
-            case 'x-wav': // Save these image types
-                saveFile($filename,$body_part->body,$mimeType);
+            case 'wave': // Save these image types
+                $this->saveFile($filename,$body_part->body,$mimeType);
                 break;
             default:
                 break;
