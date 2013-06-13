@@ -161,7 +161,9 @@ class mailReader {
             switch($body_part->ctype_secondary)
             {
             case 'plain':
-                $this->body = $body_part->body; // If there are multiple text/plain parts, we will only get the last one.
+                if(!isset($body_part->disposition)){
+                    $this->body .= $body_part->body . "\n"; // Gather all plain/text which doesn't have an inline or attachment disposition
+                }
                 break;
             }
             break;
