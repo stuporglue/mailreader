@@ -21,6 +21,15 @@ class mailReader {
     var $save_msg_to_db = FALSE; // Save e-mail message and file list to DB?
     var $save_directory; // A safe place for files. Malicious users could upload a php or executable file, so keep this out of your web root
     var $allowed_senders = Array(); // Allowed senders is just the email part of the sender (no name part)
+    var $allowed_mime_types = Array(
+        'audio/wave',
+        'application/pdf',
+        'application/zip',
+        'application/octet-stream',
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+    );
     var $debug = FALSE;
 
     var $raw = '';
@@ -83,7 +92,7 @@ class mailReader {
             }
         }
 
-        if($this->decoded->disposition == 'inline'){
+        if(isset($this->decoded->disposition) && $this->decoded->disposition == 'inline'){
             $mimeType = "{$this->decoded->ctype_primary}/{$this->decoded->ctype_secondary}"; 
 
             if(isset($this->decoded->d_parameters) &&  array_key_exists('filename',$this->decoded->d_parameters)){
@@ -149,69 +158,24 @@ class mailReader {
             $filename = "file";
         }
 
-        if($this->debug){
-            print "Found body part type {$body_part->ctype_primary}/{$body_part->ctype_secondary}\n";
-        }
-
         $mimeType = "{$body_part->ctype_primary}/{$body_part->ctype_secondary}"; 
 
-        switch($body_part->ctype_primary)
-        {
-        case 'text':
-            switch($body_part->ctype_secondary)
-            {
-            case 'plain':
-                if(!isset($body_part->disposition)){
-                    $this->body .= $body_part->body . "\n"; // Gather all plain/text which doesn't have an inline or attachment disposition
-                }
-                break;
-            }
-            break;
-        case 'audio':
-            switch($body_part->ctype_secondary)
-            {
-            case 'wave': // Save these image types
-                $this->saveFile($filename,$body_part->body,$mimeType);
-                break;
-            default:
-                break;
-            }
-            break;
-        case 'application':
-            switch ($body_part->ctype_secondary)
-            {
-            case 'pdf': // save these file types
-            case 'zip':
-            case 'octet-stream':
-                $this->saveFile($filename,$body_part->body,$mimeType);
-                break;
-            default:
-                // anything else (exe, rar, etc.) will faill into this hole and die
-                break;
-            }
-            break;
-        case 'image':
-            switch($body_part->ctype_secondary)
-            {
-            case 'jpeg': // Save these image types
-            case 'png':
-            case 'gif':
-                $this->saveFile($filename,$body_part->body,$mimeType);
-                break;
-            default:
-                break;
-            }
-            break;
-        case 'multipart':
+        if($this->debug){
+            print "Found body part type $mimeType\n";
+        }
+
+        if($body_part->ctype_primary == 'multipart') {
             if(is_array($body_part->parts)){
                 foreach($body_part->parts as $ix => $sub_part){
                     $this->decodePart($sub_part);
                 }
             }
-            break;
-        default:
-            // anything else isn't handled
-            break;
+        } else if($mimeType == 'text/plain'){
+            if(!isset($body_part->disposition)){
+                $this->body .= $body_part->body . "\n"; // Gather all plain/text which doesn't have an inline or attachment disposition
+            }
+        } else if(in_array($mimeType,$this->allowed_mime_types)){
+            $this->saveFile($filename,$body_part->body,$mimeType);
         }
     }
 
