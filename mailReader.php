@@ -273,7 +273,7 @@ class mailReader {
         $newmsg .= "files to your storage:\n\n";
         $newmsg .= "Filename -- Size\n";
         foreach($this->saved_files as $f => $s){
-            $newmsg .= "$f -- $s\n";
+            $newmsg .= "$f -- ({$s['size']}) of type {$s['mime']}\n";
         }
         $newmsg .= "\nI hope everything looks right. If not,";
         $newmsg .=  "please send me an e-mail!\n";

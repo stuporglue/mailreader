@@ -52,4 +52,6 @@ $allowed_senders = Array('myemail@example.com', 'whatever@example.com');
 $mr = new mailReader($save_directory,$allowed_senders,$pdo);
 $mr->save_msg_to_db = TRUE;
 $mr->send_email = TRUE;
+// Example of how to add additional allowed mime types to the list
+// $mr->allowed_mime_types[] = 'text/csv';
 $mr->readEmail();
