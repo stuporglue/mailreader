@@ -247,15 +247,12 @@ class mailReader {
         }
         $email_id = $this->pdo->lastInsertId();
 
-
-        if(count($this->saved_files) > 0){
+        foreach($this->saved_files as $f => $data){
             $insertFile = $this->pdo->prepare("INSERT INTO files (email_id,filename,mailsize,mime) VALUES (:email_id,:filename,:size,:mime)");
-            foreach($this->saved_files as $f => $data){
-                $insertFile->bindParam(':email_id',$email_id);
-                $insertFile->bindParam(':filename',$f);
-                $insertFile->bindParam(':size',$data['size']);
-                $insertFile->bindParam(':mime',$data['mime']);
-            }
+            $insertFile->bindParam(':email_id',$email_id);
+            $insertFile->bindParam(':filename',$f);
+            $insertFile->bindParam(':size',$data['size']);
+            $insertFile->bindParam(':mime',$data['mime']);
             if(!$insertFile->execute()){
                 if($this->debug){
                     print_r($insertFile->errorInfo());
