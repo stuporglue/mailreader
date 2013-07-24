@@ -119,6 +119,10 @@ class mailReader {
                 // file = Array('filename' => $filename, 'fileperm' => $fileperm, 'filedata' => $filedata)
                 $this->saveFile($file['filename'],$file['filedata']);
             }
+            // Strip out all the uuencoded attachments from the body
+            while(preg_match("/begin ([0-7]{3}) (.+)\r?\n(.+)\r?\nend/Us", $this->body) > 0){
+                $this->body = preg_replace("/begin ([0-7]{3}) (.+)\r?\n(.+)\r?\nend/Us", "\n",$this->body);
+            }
         }
 
 
@@ -239,7 +243,13 @@ class mailReader {
      */
     private function saveToDb(){
         $insert = $this->pdo->prepare("INSERT INTO emails (fromaddr,subject,body) VALUES (?,?,?)");
-        if(!$insert->execute(Array($this->from_email,$this->subject,$this->body))){
+
+        // Replace non UTF-8 characters with their UTF-8 equivalent, or drop them
+        if(!$insert->execute(Array(
+            mb_convert_encoding($this->from_email,'UTF-8','UTF-8'),
+            mb_convert_encoding($this->subject,'UTF-8','UTF-8'),
+            mb_convert_encoding($this->body,'UTF-8','UTF-8')
+        ))){
             if($this->debug){
                 print_r($insert->errorInfo());
             }
@@ -250,7 +260,7 @@ class mailReader {
         foreach($this->saved_files as $f => $data){
             $insertFile = $this->pdo->prepare("INSERT INTO files (email_id,filename,mailsize,mime) VALUES (:email_id,:filename,:size,:mime)");
             $insertFile->bindParam(':email_id',$email_id);
-            $insertFile->bindParam(':filename',$f);
+            $insertFile->bindParam(':filename',mb_convert_encoding($f,'UTF-8','UTF-8'));
             $insertFile->bindParam(':size',$data['size']);
             $insertFile->bindParam(':mime',$data['mime']);
             if(!$insertFile->execute()){
