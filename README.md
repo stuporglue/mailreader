@@ -63,10 +63,10 @@ I will no longer be doing free support for MailReader.
 
 If you require assistance I will be charging $75/hour. Most of the support requests I get would be solved in an hour or less. Contact me at stuporglue@gmail.com to make arrangements.
 
- # You can still download and use MailReader. Its code will live on GitHub for as long as GitHub is around.
- # If you have problems, you are encouraged to post them on the MailReader GitHub issue tracker instead of here
- # MailReader is OpenSource. You can pay (or not) anyone you want (including yourself!) to work on MailReader, the code is out there.
- # I will accept GitHub pull requests that fix bugs or add features. This sort of maintenance will be done for free.
+ 1. You can still download and use MailReader. Its code will live on GitHub for as long as GitHub is around.
+ 2. If you have problems, you are encouraged to post them on the MailReader GitHub issue tracker instead of here
+ 3. MailReader is OpenSource. You can pay (or not) anyone you want (including yourself!) to work on MailReader, the code is out there.
+ 4. I will accept GitHub pull requests that fix bugs or add features. This sort of maintenance will be done for free.
 
 
 Thanks
