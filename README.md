@@ -55,10 +55,18 @@ Use at your own risk. No guarantees or warranties.
 
 Support
 -------------------------------------
-Limited free support available in the comments on the latest blog post on [this page] [1] for this script
-or via email. Contracted support available for specific projects.
+MailReader is No Longer Being Supported For Free (But it’s Still Free)
 
-  [1]: http://stuporglue.org/tag/mailreader-php/ "this page"
+It has been a fun ride, and many people are still interested in MailReader, but my own interests have moved elsewhere. I haven’t used MailReader for my own projects for nearly 2 years and there has never been any money in it for me or anything like that.
+
+I will no longer be doing free support for MailReader.
+
+If you require assistance I will be charging $75/hour. Most of the support requests I get would be solved in an hour or less. Contact me at stuporglue@gmail.com to make arrangements.
+
+ # You can still download and use MailReader. Its code will live on GitHub for as long as GitHub is around.
+ # If you have problems, you are encouraged to post them on the MailReader GitHub issue tracker instead of here
+ # MailReader is OpenSource. You can pay (or not) anyone you want (including yourself!) to work on MailReader, the code is out there.
+ # I will accept GitHub pull requests that fix bugs or add features. This sort of maintenance will be done for free.
 
 
 Thanks
