@@ -59,9 +59,7 @@ MailReader is No Longer Being Supported For Free (But it’s Still Free)
 
 It has been a fun ride, and many people are still interested in MailReader, but my own interests have moved elsewhere. I haven’t used MailReader for my own projects for nearly 2 years and there has never been any money in it for me or anything like that.
 
-I will no longer be doing free support for MailReader.
-
-If you require assistance I will be charging $75/hour. Most of the support requests I get would be solved in an hour or less. Contact me at stuporglue@gmail.com to make arrangements.
+I will no longer be supporting MailReader.
 
  1. You can still download and use MailReader. Its code will live on GitHub for as long as GitHub is around.
  2. If you have problems, you are encouraged to post them on the MailReader GitHub issue tracker instead of as comments on my blog.
