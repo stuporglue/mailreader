@@ -35,23 +35,44 @@ ini_set('max_execution_time',600);
 require_once('mailReader.php');
 
 // Where should discovered files go
-$save_directory = __DIR__; // stick them in the current directory
+$save_directory = '/attachments/'; // stick them in the current directory
 
 // Configure your MySQL database connection here
 // Other PDO connections will probably work too
-$db_host = 'localhost';
-$db_un = 'db_un';
-$db_pass = 'db_pass';
-$db_name = 'db_name';
+$db_host = '';
+$db_un = '';
+$db_pass = '';
+$db_name = '';
 $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8",$db_un,$db_pass);
 
 
 // Who can send files to through this script?
-$allowed_senders = Array('myemail@example.com', 'whatever@example.com');
+
+//select mentor's email addresses
+$getUsers = $pdo->prepare("SELECT useremail FROM tprusers");
+$getUsers->execute();
+$users = $getUsers->fetchAll();
+
+//declare array
+$mentoremails = array();
+
+//insert emails into array
+foreach ($users as $user) {
+	$mentoremails[] = $user['useremail'];
+}
+
+//turn email array into comma-separated string
+//$emailstr = implode (",' '", $mentoremails);
+//$emailstr = "'".$emailstr."'";
+
+$allowed_senders = $mentoremails;
+
+//$allowed_senders = $emailstr;
+//$allowed_senders = Array('willchurchill89@gmail.com');
 
 $mr = new mailReader($save_directory,$allowed_senders,$pdo);
 $mr->save_msg_to_db = TRUE;
-$mr->send_email = TRUE;
+//$mr->send_email = TRUE;
 // Example of how to add additional allowed mime types to the list
 // $mr->allowed_mime_types[] = 'text/csv';
 $mr->readEmail();
