@@ -1,6 +1,6 @@
 <?php
 
-require_once('mimeDecode.php');
+require_once('/home3/enactusu/php/Mail/mimeDecode.php');
 
 /*
  * @class mailReader.php
