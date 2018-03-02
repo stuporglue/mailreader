@@ -260,7 +260,8 @@ class mailReader {
         foreach($this->saved_files as $f => $data){
             $insertFile = $this->pdo->prepare("INSERT INTO files (email_id,filename,mailsize,mime) VALUES (:email_id,:filename,:size,:mime)");
             $insertFile->bindParam(':email_id',$email_id);
-            $insertFile->bindParam(':filename',mb_convert_encoding($f,'UTF-8','UTF-8'));
+     	    $convertedFilename = mb_convert_encoding($f,'UTF-8','UTF-8');
+            $insertFile->bindParam(':filename', $convertedFilename);
             $insertFile->bindParam(':size',$data['size']);
             $insertFile->bindParam(':mime',$data['mime']);
             if(!$insertFile->execute()){
