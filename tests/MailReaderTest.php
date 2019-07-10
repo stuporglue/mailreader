@@ -59,8 +59,10 @@ class MailReaderTest extends TestCase
         $this->assertNull($output);
 
         $mr = new MailReader($this->handle, '..');
-        $this->assertFalse($mr->getMessages('no@email.com'));
+        $this->assertEquals(0, $mr->getMessages('no@email.com'));
+        $this->assertEquals(0, $mr->getMessageCount('no@email.com'));
         $emails = $mr->getMessages('name@company2.com');
+        $this->assertEquals(1, $mr->getMessageCount('name@company2.com'));
 
         $emailID = $emails[0]->getId();
         $this->assertTrue(\is_int($emailID));

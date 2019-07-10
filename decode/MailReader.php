@@ -274,12 +274,28 @@ class MailReader
         return $this->saved_files;
     }
 
+    public function getMessageCount(string $email)
+    {
+        $dbc = $this->pdo;
+		if ($dbc instanceof \PDO) {
+            $messages = $dbc->prepare("SELECT count(*) FROM emails WHERE toaddr=?");
+            if (!is_bool($messages)) {
+                $messages->execute([$email]);
+                $count = $messages->fetchColumn();
+                unset($messages);
+                return $count;
+            }
+        }
+
+        return false;
+    }
+
     public function getMessages(string $email, int $offset = 0, int $max = 20)
     {
         $dbc = $this->pdo;
 		if ($dbc instanceof \PDO) {
             $emails = $dbc->prepare("SELECT * FROM emails WHERE toaddr=:mail LIMIT :offset, :max");
-            if (!is_bool($email)) {
+            if (!is_bool($emails)) {
                 $emails->bindValue(':mail', $email);
                 $emails->bindValue(':offset', $offset, \PDO::PARAM_INT);
                 $emails->bindValue(':max', $max, \PDO::PARAM_INT);
@@ -293,6 +309,8 @@ class MailReader
                 unset($emails);
                 if (\count($records) > 0) 
                     return $records;
+                
+                return 0;
             }
         }
 
