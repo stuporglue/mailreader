@@ -279,19 +279,21 @@ class MailReader
         $dbc = $this->pdo;
 		if ($dbc instanceof \PDO) {
             $emails = $dbc->prepare("SELECT * FROM emails WHERE toaddr=:mail LIMIT :offset, :max");
-            $emails->bindValue(':mail', $email);
-            $emails->bindValue(':offset', $offset, \PDO::PARAM_INT);
-            $emails->bindValue(':max', $max, \PDO::PARAM_INT);
-            $emails->execute();
+            if (!is_bool($email)) {
+                $emails->bindValue(':mail', $email);
+                $emails->bindValue(':offset', $offset, \PDO::PARAM_INT);
+                $emails->bindValue(':max', $max, \PDO::PARAM_INT);
+                $emails->execute();
 
-            $records = [];
-            while ($record = $emails->fetchObject('Mail\Messages')) {
-                $records[] = $record;
+                $records = [];
+                while ($record = $emails->fetchObject('Mail\Messages')) {
+                    $records[] = $record;
+                }
+
+                unset($emails);
+                if (\count($records) > 0) 
+                    return $records;
             }
-
-            unset($emails);
-            if (\count($records) > 0) 
-                return $records;
         }
 
         return false;
@@ -302,17 +304,19 @@ class MailReader
         $dbc = $this->pdo;
 		if ($dbc instanceof \PDO) {
             $files = $dbc->prepare("SELECT * FROM files WHERE email=:id");
-            $files->bindValue(':id', $message_id, \PDO::PARAM_INT);
-            $files->execute();
+            if (!is_bool($files)) {
+                $files->bindValue(':id', $message_id, \PDO::PARAM_INT);
+                $files->execute();
 
-            $records = [];
-            while ($record = $files->fetchObject('Mail\MessageAttachments')) {
-                $records[] = $record;
+                $records = [];
+                while ($record = $files->fetchObject('Mail\MessageAttachments')) {
+                    $records[] = $record;
+                }
+
+                unset($files);
+                if (\count($records) > 0) 
+                    return $records;
             }
-
-            unset($files);
-            if (\count($records) > 0) 
-                return $records;
         }
 
         return false;

@@ -17,7 +17,7 @@ class MailReaderTest extends TestCase
 
     protected $handle;
 
-    protected function setUp(): void
+    protected function setUp()
     {
         if (!\extension_loaded('pdo_mysql')) {
             $this->markTestSkipped(
@@ -39,7 +39,7 @@ class MailReaderTest extends TestCase
         );
     }
 
-    protected function tearDown(): void
+    protected function tearDown()
     {
         $this->handle->query('DROP TABLE emails;');
         $this->handle->query('DROP TABLE files;');
@@ -54,7 +54,7 @@ class MailReaderTest extends TestCase
         if ('\\' == \DIRECTORY_SEPARATOR)
             $output = \shell_exec('type tests\testfile | php mailPipe.php');
         else
-            $output = \shell_exec('cat tests/testfile | ./mailPipe.php');
+            $output = \shell_exec('cat tests/testfile | php mailPipe.php');
 
         $this->assertNull($output);
 
