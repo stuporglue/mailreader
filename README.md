@@ -1,91 +1,157 @@
-mailReader.php
+mailreader
 ====================================
 
-Recieve mail and attachments with PHP
+[![Build Status](https://travis-ci.org/techno-express/mailreader.svg?branch=master)](https://travis-ci.org/techno-express/mailreader)[![codecov](https://codecov.io/gh/techno-express/mailreader/branch/master/graph/badge.svg)](https://codecov.io/gh/techno-express/mailreader)
+
+Receive mail and attachments with PHP
+
+This package can be used to...
+
+- Parse, decode and read email from Postfix, and others still WIP.
+- For reading messages (Filename extension: eml)
+- Create webMail
+- Store email information such a subject, body, attachments, and etc. into a database
 
 Usage
 -------------------------------------
-mailReader.php contains the class that works with the incoming email. 
 
-mailPipe.php is a sample script using the mailReader class.
+Full documentation is a work in progress, see **Phpunit** [tests](#./tests/) folder for more example usage.
 
+**MailReader.php** contains the class that works with the incoming email, and the database.
 
-mailPipe.php expects to recieve raw emails via STDIN.
+**MailParser.php** contains the class that works with any file that's in an email format.
 
-You can run the script manually by using cat
+**mailPipe.php** is a sample script using the MailReader class.
 
-    cat testfile.txt | ./mailPipe.php
+**mailPipe.php** expects to receive raw emails via **STDIN**.
 
-You will likely want to copy mailPipe.php to your own script and adjust
-the parameters to suite your needs.
+You can run the script manually by using **`cat`**
 
+```sh
+cat tests/testfile | ./mailPipe.php
+```
 
-Requirements
+Or **`type`** On Windows
+
+```cmd
+type tests\testfile | php mailPipe.php
+```
+
+You will likely want to copy *mailPipe.php* to your own script and adjust the parameters to suite your needs.
+
+This library also allows you to easily parse an email given its content (headers + body).
+
+```php
+require 'vendor/autoload.php';
+
+use Mail\MailParser;
+
+$emailPath = "/var/mail/spool/dan/new/12323344323234234234";
+$emailParser = new MailParser(file_get_contents($emailPath));
+
+// You can use some predefined methods to retrieve headers...
+$to = $emailParser->getTo();
+$subject = $emailParser->getSubject();
+$cc = $emailParser->getCc();
+$from = $emailParser->getFrom();
+$fromName = $emailParser->getFromName();
+$fromEmail = $emailParser->getFromEmail();
+$attachments = $emailParser->getAttachments();
+
+$actualContent = $attachments[0]['content']
+
+// ... or you can use the 'general purpose' method getHeader()
+$emailDeliveredToHeader = $emailParser->getHeader('Delivered-To');
+
+$emailBody = $emailParser->getPlain();
+```
+
+Installation
 -------------------------------------
-You will need mimeDecode.php from http://pear.php.net/package/Mail_mimeDecode/ 
 
-I used version 1.5.5.
+```shell
+composer require forked/mailreader
+```
+
+Will pull composer [forked/mail_mime-decode](https://packagist.org/packages/forked/mail_mime-decode) package in as dependency.
 
 Setup
 -------------------------------------
+
 Configure your mail server to pipe emails to this script. See
-http://stuporglue.org/add-an-email-address-that-forwards-to-a-script/
+<http://stuporglue.org/add-an-email-address-that-forwards-to-a-script/>
 for instructions.  
 
-Make this script executable, and edit the configuration options to suit your needs. Change permissions
-of the directories so that the user executing the script (probably the
-mail user) will have write permission to the file upload directory.
+Make this script *executable*, and edit the configuration options to suit your needs. Change permissions of the directories so that the user executing the script (probably the mail user) will have write permission to the file upload directory.
 
-By default the script is configured to save pdf, zip, jpg, png and gif files.
-Edit the switch statements around line 200 to change this.
+By default the script is configured to save pdf, zip, jpg, png and gif files. Edit the method array property `$allowed_mime_types` around line 47 to change this. Or call `->addMimeType()` to add more.
 
+___Postfix configuration to manage email from a mail server___
+
+Next you need to forward emails to this script above. For that I'm using [Postfix](http://www.postfix.org/) like a mail server, you need to configure /etc/postfix/master.cf
+
+Add this line at the end of the file (specify myhook to send all emails to the script mailPipe.php)
+
+```sh
+myhook unix - n n - - pipe              flags=F user=www-data argv=php -c /etc/php5/apache2/php.ini -f /var/www/mailPipe.php ${sender} ${size} ${recipient}
+```
+
+Edit this line (register myhook)
+
+```sh
+smtp      inet  n       -       -       -       -       smtpd                   -o content_filter=myhook:dummy
+```
 
 License
 -------------------------------------
-Copyright 2012, 
+
+Copyright 2012,
 Michael Moore <stuporglue@gmail.com>
-http://stuporglue.org
+<http://stuporglue.org>
 
-Licensed under the same terms as PHP itself and under the GPLv2.
-
-You are free to use this script for personal or commercial projects. 
-
-Use at your own risk. No guarantees or warranties.
-
+Licensed under the same terms as PHP itself and under the GPLv2 or Later.
+You are free to use this script for personal or commercial projects. Use at your own risk. No guarantees or warranties.
 
 Support
 -------------------------------------
-MailReader is No Longer Being Supported For Free (But it’s Still Free)
 
-It has been a fun ride, and many people are still interested in MailReader, but my own interests have moved elsewhere. I haven’t used MailReader for my own projects for nearly 2 years and there has never been any money in it for me or anything like that.
-
-I will no longer be supporting MailReader.
-
- 1. You can still download and use MailReader. Its code will live on GitHub for as long as GitHub is around.
- 2. If you have problems, you are encouraged to post them on the MailReader GitHub issue tracker instead of as comments on my blog.
- 3. MailReader is OpenSource. You can pay (or not) anyone you want (including yourself!) to work on MailReader, the code is here.
- 4. I will accept GitHub pull requests that fix bugs or add features. This sort of maintenance will be done for free.
-
+ 1. If you have problems, you are encouraged to post them on the MailReader GitHub issue tracker instead of as comments on my blog.
+ 2. MailReader is OpenSource. You can pay (or not) anyone you want (including yourself!) to work on MailReader, the code is here.
+ 3. I will accept GitHub pull requests that fix bugs or add features. This sort of maintenance will be done for free.
 
 Thanks
 -------------------------------------
-Many thanks to forahobby of www.360-hq.com for testing this script and helping me find
-the initial bugs and Craig Hopson of twitterrooms.co.uk for help tracking down an iOS email handling bug.
 
+Many thanks to *forahobby* of www.360-hq.com for testing this script and helping me find the initial bugs and *Craig Hopson* of twitterrooms.co.uk for help tracking down an iOS email handling bug.
 
 Versions
 -------------------------------------
-May 21, 2013
-* UUEncoded attachment support
-* It's now a class
-* Uses PHP PDO connection with prepared statements instead of mysql/mysql_real_escape_string
-* Support for inline content type (from mail app on mac?)
 
-April 14, 2012
-* Uses PEAR's mimeDecode.php
-* Support for more mime part configurations
+___July 9, 2019___
 
-March 24, 2010
-* Initial release
-* Works for me, for Gmail.
-* Homemade parser!
+- many additions, library more **OOP** compliant.
+- added methods to easily retrieved records from the database.
+- added additional classes to work with any email formated file/folder.
+- added PSR-4 support, can now be installed using [Composer](https://getcomposer.org).
+- added phpunit tests, and email files to test against.
+- removed allowed senders, any email received with script will get an reply if turned on.
+- the mailPipe script now setup to auto locate the database config and create database if not initialized.
+- general code clean up.
+
+___May 21, 2013___
+
+- UUEncoded attachment support
+- It's now a class
+- Uses PHP PDO connection with prepared statements instead of mysql/mysql_real_escape_string
+- Support for inline content type (from mail app on mac?)
+
+___April 14, 2012___
+
+- Uses PEAR's mimeDecode.php
+- Support for more mime part configurations
+
+___March 24, 2010___
+
+- Initial release
+- Works for me, for gmail.com
+- Homemade parser!

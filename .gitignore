@@ -1,0 +1,11 @@
+build/
+composer.lock
+composer.phar
+phpunit.*
+vendor/
+mailPiped/
+*.lock
+*.cache
+*.crt
+*.pem
+*.csr

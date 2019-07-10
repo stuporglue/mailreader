@@ -1,0 +1,27 @@
+From example.com@example.com  Tue Feb 10 11:45:19 2015
+Return-Path: <example.com@example.com>
+X-Original-To: submit2+527@example.net
+Delivered-To: irr848877@example.com
+Received: (from root@localhost)
+  by d2.example.com (8.14.5/8.14.5/Submit) id t1ABe5di062385;
+  Tue, 10 Feb 2015 11:40:05 GMT
+  (envelope-from root)
+Date: Tue, 10 Feb 2015 11:40:05 GMT
+Message-Id: <201502101140.t1ABe5di062385@d2.example.com>
+To: irr84@example.com
+Subject: foobar.com download complete
+X-PHP-Originating-Script: 0:asdf.php
+From: foobar notification <do-not-reply@foobar.com>
+Content-type: text/plain; charset=UTF-8
+
+Hello,
+
+this is the automated message from foobar.com. Your files are cached already and ready for download.
+
+Log in to your account and start download or click the link:
+http://foobar.com/files?a=true&hash=123
+
+---
+support@foobar.com
+
+

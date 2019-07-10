@@ -23,35 +23,60 @@
 
 
 // Set a long timeout in case we're dealing with big files
-set_time_limit(600);
-ini_set('max_execution_time',600);
+\set_time_limit(600);
+\ini_set('max_execution_time', 600);
 
 // Anything printed to STDOUT will be sent back to the sender as an error!
 // error_reporting(-1);
 // ini_set("display_errors", 1);
 
-
-// Require the file with the mailReader class in it
-require_once('mailReader.php');
-
 // Where should discovered files go
-$save_directory = __DIR__; // stick them in the current directory
+//$save_directory = __DIR__; // stick them in the current directory
+$info = \dirname(__FILE__);
+$findConfigPath = $info.\DIRECTORY_SEPARATOR;
+$save_directory = $findConfigPath.'mailPiped' ; // stick in the script's directory
+if (('\\' !== \DIRECTORY_SEPARATOR) && \is_dir($findConfigPath.'public_html')) {
+    $info = \posix_getpwuid(\posix_getuid());
+    $findConfigPath = $info['dir'].\DIRECTORY_SEPARATOR.'public_html'.\DIRECTORY_SEPARATOR;
+    $save_directory = $info['dir'].\DIRECTORY_SEPARATOR.'mailPiped' ; // stick in the process user directory
+}
 
-// Configure your MySQL database connection here
-// Other PDO connections will probably work too
-$db_host = 'localhost';
-$db_un = 'db_un';
-$db_pass = 'db_pass';
-$db_name = 'db_name';
-$pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8",$db_un,$db_pass);
+$config_path = null;
+// locate database config file
+if (($directoryHandle = @\opendir($findConfigPath)) == true ) {
+    while (($file = \readdir($directoryHandle)) !== false) {
+        // Make sure we're not dealing with a file or a link to the parent directory
+        if ((\is_dir($findConfigPath.$file) && (($file == '.' || $file == '..') !== true) ) 
+            && (\is_file($findConfigPath.$file.\DIRECTORY_SEPARATOR.'mailConfig.php'))
+        ) {
+			$config_path = $findConfigPath.$file.\DIRECTORY_SEPARATOR;
+			break;
+	   }
+    }
+	\closedir($directoryHandle);
+}
 
+// Require the file with the MailReader class in it
+require_once($config_path.'..'.\DIRECTORY_SEPARATOR.'vendor'.\DIRECTORY_SEPARATOR.'autoload.php');
 
-// Who can send files to through this script?
-$allowed_senders = Array('myemail@example.com', 'whatever@example.com');
+use Mail\MailReader;
 
-$mr = new mailReader($save_directory,$allowed_senders,$pdo);
-$mr->save_msg_to_db = TRUE;
-$mr->send_email = TRUE;
+require($config_path.'mailConfig.php');
+$pdo = new \PDO("mysql:host=$db_host;dbname=$db_name;charset=$db_charset;port=$db_port", 
+    $db_user, 
+    $db_pass, 
+    array(
+        \PDO::ATTR_EMULATE_PREPARES => false, 
+        \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
+        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
+    )
+);
+\create_mail_pipe_db($pdo);
+
+$mr = new MailReader($pdo, $save_directory);
+$mr->saveOn();
+$mr->sendOff();
 // Example of how to add additional allowed mime types to the list
-// $mr->allowed_mime_types[] = 'text/csv';
+$mr->addMimeType('text/csv');
 $mr->readEmail();
+$pdo = null;
