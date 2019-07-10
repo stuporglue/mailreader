@@ -47,6 +47,7 @@ class MailParser
      */
     protected $attachments = [];
     
+    /**
      * A safe place for files.
      *
      * @var string
