@@ -3,6 +3,7 @@ language: php
 php:
   - 5.6
   - 7.0
+  - 7.1
 
 matrix:
   allow_failures:
@@ -24,4 +25,4 @@ after_success:
   - bash <(curl -s https://codecov.io/bash)
 
 script: 
-  - vendor/bin/phpunit --coverage-clover=coverage.xml
+  - phpunit --coverage-clover=coverage.xml
