@@ -4,10 +4,12 @@ php:
     - 5.6
     - 7.0
     - 7.1
+    - 7.2
 
 matrix:
     allow_failures:
         - php: 5.6
+        - php: 7.2
 
 env:
     - MYSQL_HOST=127.0.0.1 MYSQL_USER=root
