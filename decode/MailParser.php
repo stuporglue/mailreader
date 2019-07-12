@@ -356,7 +356,7 @@ class MailParser
 
     /**
      *
-     * @return array
+     * @return string
      * @throws \Exception if a to header is not found or if there are no recipient
      */
     public function getTo()
@@ -365,7 +365,8 @@ class MailParser
             throw new \Exception("Couldn't find the recipients of the email");
         }
         
-        return \utf8_encode(\iconv_mime_decode($this->rawFields['to']));
+        // @see https://www.php.net/manual/en/function.imap-utf8.php#102081
+        return \iconv_mime_decode($this->rawFields['to'], 0, "UTF-8");
     }
 
     /**
@@ -379,7 +380,8 @@ class MailParser
             throw new \Exception("Couldn't find the subject of the email");
         }
         
-        return \utf8_encode(\iconv_mime_decode($this->rawFields['subject']));
+        // @see https://www.php.net/manual/en/function.imap-utf8.php#102081
+        return \iconv_mime_decode($this->rawFields['subject'], 0, "UTF-8");
     }
 
     /**
@@ -457,8 +459,9 @@ class MailParser
         if (!isset($this->rawFields['from'])) {
             throw new \Exception("Couldn't find the sender of the email");
         }
-                
-        return  \utf8_encode(\iconv_mime_decode($this->rawFields['from']));
+
+        // @see https://www.php.net/manual/en/function.imap-utf8.php#102081
+        return \iconv_mime_decode($this->rawFields['from'], 0, "UTF-8");
     }
 
     /**

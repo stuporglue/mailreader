@@ -15,12 +15,22 @@ class MailParserTest extends TestCase
         $this->assertEquals('foobar.com download complete', $email->getSubject());
     }
 
+    public function testSubjectForeign()
+    {
+        $file = __DIR__ . '/emails/m0009';
+        $email = new MailParser(\file_get_contents($file));
+
+        $this->assertEquals("これはテストです", $email->getSubject());
+        $this->assertEquals("それは作品を期待", $email->getPlain());
+    }
+
     public function testFrom()
     {
         $file = __DIR__ . '/emails/m0001';
         $email = new MailParser(\file_get_contents($file));
 
         $this->assertEquals('Name <name@company.com>', $email->getFrom());
+        $this->assertEquals("Mail avec fichier attaché de 1ko", $email->getSubject());
     }
 
     public function testTo()
