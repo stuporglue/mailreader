@@ -89,7 +89,6 @@ class MailParser
                 $this->attachment_directory .= \DIRECTORY_SEPARATOR; 
             }
 
-
             // http://pear.php.net/manual/en/package.mail.mail-mimedecode.decode.php
             $decoder = new Mail_mimeDecode($this->raw);
 
@@ -226,6 +225,19 @@ class MailParser
             }
             $i++;
         }
+    }
+
+    /**
+     * Add additional allowed mime types to the list.
+     * 
+     * @param string
+     */
+    public function addMimeType($mime_types = '')
+    {
+        if (\strpos($mime_types, '/') !== false)
+            \array_push($this->allowedMimeTypes, $mime_types);
+
+        return $this;
     }
 
     /**
@@ -465,14 +477,19 @@ class MailParser
     }
 
     /**
-     * Returns the sender name
+     * Returns the name of To or From
      * 
      * @return string
+     * @throws \Exception if To or From is not found
      */
-    public function getFromName()
+    private function getToFromName($toFrom = null)
     {
+        if (empty($toFrom)) {
+            throw new \Exception("Couldn't find To or From of the email");
+        }
+
         // the returned string is like "John Smith <john.smith@example.com>"
-        $strName = $this->getHeader("from");
+        $strName = $this->getHeader($toFrom);
 
         //if returned string == "<john.smith@example.com>" there's not a name. So < and > chars are removed the result is checked
         $trans = array("<" => "", ">" => "");
@@ -487,15 +504,29 @@ class MailParser
         return \substr($strName, 0, \strpos($strName, '<') - 1);
     }
 
-    /**
-     * Returns the sender email
-     * 
-     * @return string $str
-     */
-    public function getFromEmail()
+    public function getFromName()
     {
+        return $this->getToFromName("from");
+    }
+
+    public function getToName()
+    {
+        return $this->getToFromName("to");
+    }
+
+    /**
+     * Returns the email of To or From
+     * 
+     * @return string
+     */
+    private function getToFromEmail($toFrom = null)
+    {
+        if (empty($toFrom)) {
+            throw new \Exception("Couldn't find To or From of the email");
+        }
+
         // the returned string is like "John Smith <john.smith@example.com>"
-        $strEmail = $this->getHeader("from");
+        $strEmail = $this->getHeader($toFrom);
 
         //if returned string == "<john.smith@example.com>" there's not a name. So < and > chars are removed the result is checked
         $trans = array("<" => "", ">" => "");
@@ -510,6 +541,26 @@ class MailParser
         return \substr($strEmail, \strpos($strEmail, '<') + 1, \strlen($strEmail) - \strpos($strEmail, '<') - 2);
     }
 
+    public function getFromEmail()
+    {
+        return $this->getToFromEmail('from');
+    }
+
+    public function getToEmail()
+    {
+        return $this->getToFromEmail('to');
+    }
+
+    /**
+     * Decode a single body part of an email message,
+     * the body part of the email message, as parsed by Mail_mimeDecode.
+     * 
+     * Recursive if nested body parts are found
+     *
+     * This is the meat of the script.
+     *
+     * @param mixed $body_part (required) 
+     */
     private function decodePart($body_part, $saving = true)
     {
         if ( isset($body_part->ctype_parameters) && \is_array($body_part->ctype_parameters) ) {
@@ -562,14 +613,21 @@ class MailParser
 
     private function isValidAttachment($mime_type)
     {
-        if ( empty($this->allowedMimeTypes) || \in_array($mime_type, $this->allowedMimeTypes) ) {
-            if ( empty($this->disallowedMimeTypes) || !\in_array($mime_type, $this->disallowedMimeTypes) ) {
-                return true;
-            }
+        if (\in_array($mime_type, $this->allowedMimeTypes) && !\in_array($mime_type, $this->disallowedMimeTypes)) {            
+            return true;
         }
+
         return false;
     }
 
+    /**
+     * Save off a single file
+     *
+     * @param string $filename (required) The filename to use for this file
+     * @param mixed $contents (required) The contents of the file we will save
+     * @param string $mimeType (required) The mime-type of the file
+     * @param bool $saving should we actual save to file system
+     */
     private function saveAttachment($filename, $contents, $mime_type = 'unknown', $saving = true)
     {
         $filename = \mb_convert_encoding($filename, $this->charset, $this->charset);
@@ -614,6 +672,12 @@ class MailParser
         }
     }
 
+    /**
+     * Format Bytes into human-friendly sizes
+     * with the number of bytes in the largest applicable unit (eg. KB, MB, GB, TB)
+     *
+     * @return string 
+     */
     private function formatBytes($bytes, $precision = 2)
     {
         $units = [ 'B', 'KB', 'MB', 'GB', 'TB' ];

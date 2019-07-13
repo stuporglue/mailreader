@@ -71,20 +71,22 @@ class MailReaderTest extends TestCase
         $this->assertEquals('Name <name@company.com>', $emails[0]->getSender());
         $this->assertEquals('Sat, 30 Apr 2005 19:28:29 -0300', $emails[0]->getDate());
         $this->assertEquals('Testing MIME E-mail composing with cid', $emails[0]->getSubject());
+        $this->assertEquals("This is an HTML message. Please use an HTML capable mail program to read\nthis message.", $emails[0]->getPlain());
 
         $this->assertFalse($mr->getMessageAttachments(0));
         $emailAttachments = $mr->getMessageAttachments($emailID);
-
         $saved = $mr->findDirectory('.');
         $attachDir = $saved  . \DIRECTORY_SEPARATOR;
         
         $attachmentFiles = \glob($attachDir . '*');
         $this->assertEquals(2, \count($attachmentFiles));
 
-        $this->assertFileExists($attachDir . $emailAttachments[0]->getName());
-        $this->assertTrue((\strpos($emailAttachments[0]->getName(), '_logo_jpg') !== false));
-        $this->assertFileExists($attachDir . $emailAttachments[1]->getName());
-        $this->assertTrue((\strpos($emailAttachments[1]->getName(), '_background_jpg') !== false));
+        $this->assertFileExists($emailAttachments[0]->getPath());
+        $this->assertEquals('logo.jpg', $emailAttachments[0]->getName());
+        $this->assertEquals('image/gif', $emailAttachments[0]->getMime());
+        $this->assertFileExists($emailAttachments[1]->getPath());
+        $this->assertEquals('background.jpg', $emailAttachments[1]->getName());
+        $this->assertEquals('image/gif', $emailAttachments[1]->getMime());
 
         // Clean up attachments dir
         $attachDir = 'mailPiped' . \DIRECTORY_SEPARATOR;
@@ -118,10 +120,12 @@ class MailReaderTest extends TestCase
 
         $emails = $mr->getMessages('test@domain.com');
         $emailID = $emails[0]->getId();
+        $this->assertEquals("<html><body>TEST HTML MESSAGE WITH ATTACHMENT</body></html>", $emails[0]->getHtml());
         $emailAttachments = $mr->getMessageAttachments($emailID);
 
-        $this->assertEquals('11.33 KB', $fileSaved[$emailAttachments[0]->getName()]['size']);
-        $this->assertEquals('image/gif', $fileSaved[$emailAttachments[0]->getName()]['mime']);
+        $this->assertEquals('av-7.gif', $fileSaved[0]['name']);
+        $this->assertEquals('11.33 KB', $fileSaved[0]['size']);
+        $this->assertEquals('image/gif', $fileSaved[0]['mime']);
 
         $attachmentFiles = \glob($attachDir.'*');
 

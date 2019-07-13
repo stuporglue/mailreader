@@ -6,6 +6,7 @@ class MessageAttachments
 {
     private $email;
     private $name;
+    private $path;
     private $size;
     private $mime;
 

@@ -21,7 +21,8 @@ if (!\function_exists('create_mail_pipe_db')) {
                     fromaddr varchar(255) NOT NULL,
                     date varchar(255) NOT NULL,
                     subject varchar(255) NOT NULL,
-                    body text NOT NULL,
+                    plain text NOT NULL,
+                    html text NOT NULL,
                     maildate timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     PRIMARY KEY (id)
                   ) AUTO_INCREMENT=2;");
@@ -38,6 +39,7 @@ if (!\function_exists('create_mail_pipe_db')) {
 					id int(255) NOT NULL AUTO_INCREMENT,
 					email int(255) NOT NULL,
 					name varchar(255) NOT NULL,
+					path varchar(510) NOT NULL,
 					size varchar(20) NOT NULL,
 					mime varchar(100) NOT NULL,
 					PRIMARY KEY (id)

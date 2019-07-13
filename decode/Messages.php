@@ -9,7 +9,8 @@ class Messages
     private $sender;
     private $date;
     private $subject;
-    private $body;
+    private $plain;
+    private $html;
 
 	public function __set($name, $value) {}
 

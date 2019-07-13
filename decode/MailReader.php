@@ -3,6 +3,7 @@
 namespace Mail;
 
 use \Mail_mimeDecode;
+use Mail\MailParser;
 
 /**
  * @package MailReader.php
@@ -19,6 +20,11 @@ use \Mail_mimeDecode;
  */
 class MailReader 
 {
+    /**
+     * Attachments Array
+     *
+     * @var array
+     */
     private $saved_files = [];
 
     /**
@@ -46,6 +52,7 @@ class MailReader
 
     private $allowed_mime_types = [
         'audio/wave',
+        'audio/caf',
         'application/pdf',
         'application/zip',
         'application/octet-stream',
@@ -64,7 +71,8 @@ class MailReader
     private $from;
     private $from_email;
     private $subject;
-    private $body;
+    private $plain;
+    private $html;
 
     /**
      * @param \PDO $pdo A PDO connection to a database for saving emails 
@@ -72,13 +80,13 @@ class MailReader
      */
     public function __construct($pdo = null, $save_directory = null)
     {
-        if (empty($save_directory))
-            $save_directory = $this->findDirectory();
-
         if (!\file_exists($save_directory))
             @\mkdir($save_directory, 0770, true);
 
-        $this->save_directory = \rtrim($save_directory, \DIRECTORY_SEPARATOR) . \DIRECTORY_SEPARATOR;
+        if (!\preg_match('|\\/$|', $save_directory))
+            $save_directory .= \DIRECTORY_SEPARATOR;
+
+        $this->save_directory = $save_directory;
         $this->pdo = $pdo;
     }
 
@@ -193,68 +201,17 @@ class MailReader
             $this->raw .= \fread($fd, 1024); 
         }
 
-        // Now decode it!
-        // http://pear.php.net/manual/en/package.mail.mail-mimedecode.decode.php
-        $decoder = new Mail_mimeDecode($this->raw);
-        $this->decoded = $decoder->decode([
-            'decode_headers' => true,
-            'include_bodies' => true,
-            'decode_bodies' => true
-        ]);
+        $this->decoded = new MailParser($this->raw);
 
-        $this->to = $this->decoded->headers['to'];
-        $this->to_email = \preg_replace('/.*<(.*)>.*/', "$1", $this->to);
-        $this->date = $this->decoded->headers['date'];
-        // Set $this->from_email
-        $this->from = $this->decoded->headers['from'];
-        $this->from_email = \preg_replace('/.*<(.*)>.*/', "$1", $this->from);
-
-        // Set the $this->subject
-        $this->subject = $this->decoded->headers['subject'];
-
-        // Find the email body, and any attachments
-        // $body_part->ctype_primary and $body_part->ctype_secondary make up the mime type eg. text/plain or text/html
-        if (isset($this->decoded->parts) && \is_array($this->decoded->parts)) {
-            foreach ($this->decoded->parts as $idx => $body_part) {
-                $this->decodePart($body_part);
-            }
-        }
-
-        if (isset($this->decoded->disposition) && $this->decoded->disposition == 'inline') {
-            $mimeType = "{$this->decoded->ctype_primary}/{$this->decoded->ctype_secondary}"; 
-
-            if (isset($this->decoded->d_parameters) 
-                && \array_key_exists('filename', $this->decoded->d_parameters)) {
-                $filename = $this->decoded->d_parameters['filename'];
-            } else {
-                $filename = 'file';
-            }
-
-            $this->saveFile($filename, $this->decoded->body, $mimeType);
-            $this->body = "Body was a binary";
-        }
-
-        // We might also have uuencoded files. Check for those.
-        if (!isset($this->body)) {
-            if (isset($this->decoded->body)) {
-                $this->body = $this->decoded->body;
-            } else {
-                $this->body = "No plain text body found";
-            }
-        }
-
-        if (\preg_match("/begin ([0-7]{3}) (.+)\r?\n(.+)\r?\nend/Us", $this->body) > 0) {
-            foreach ($decoder->uudecode($this->body) as $file) {
-                // file = Array('filename' => $filename, 'fileperm' => $fileperm, 'filedata' => $filedata)
-                $this->saveFile($file['filename'], $file['filedata']);
-            }
-
-            // Strip out all the uuencoded attachments from the body
-            while (\preg_match("/begin ([0-7]{3}) (.+)\r?\n(.+)\r?\nend/Us", $this->body) > 0) {
-                $this->body = \preg_replace("/begin ([0-7]{3}) (.+)\r?\n(.+)\r?\nend/Us", "\n", $this->body);
-            }
-        }
-
+        $this->to = $this->decoded->getTo();
+        $this->to_email = $this->decoded->getToEmail();
+        $this->date = $this->decoded->getDate();
+        $this->from = $this->decoded->getFrom();
+        $this->from_email = $this->decoded->getFromEmail();
+        $this->subject = $this->decoded->getSubject();
+        $this->plain = $this->decoded->getPlain();
+        $this->html = $this->decoded->getHtml();
+        $this->saved_files = $this->decoded->decode($this->save_directory);
 
         // Put the results in the database if needed
         if ($this->save_msg_to_db && !\is_null($this->pdo)) {
@@ -339,114 +296,14 @@ class MailReader
 
         return false;
     }
-    
-    /**
-     * Decode a single body part of an email message,
-     * the body part of the email message, as parsed by Mail_mimeDecode.
-     * 
-     * Recursive if nested body parts are found
-     *
-     * This is the meat of the script.
-     *
-     * @param mixed $body_part (required) 
-     */
-    private function decodePart($body_part) 
-    {
-        if (\array_key_exists('name', $body_part->ctype_parameters)) { // everyone else I've tried
-            $filename = $body_part->ctype_parameters['name'];
-        } elseif ($body_part->ctype_parameters 
-            && \array_key_exists('filename', $body_part->ctype_parameters)) { // hotmail
-            $filename = $body_part->ctype_parameters['filename'];
-        } else {
-            $filename = "file";
-        }
-
-        $mimeType = "{$body_part->ctype_primary}/{$body_part->ctype_secondary}"; 
-
-        if ($this->debug) {
-            print "Found body part type $mimeType\n";
-        }
-
-        if ($body_part->ctype_primary == 'multipart') {
-            if (\is_array($body_part->parts)) {
-                foreach($body_part->parts as $ix => $sub_part) {
-                    $this->decodePart($sub_part);
-                }
-            }
-        } elseif ($mimeType == 'text/plain') {
-            if (!isset($body_part->disposition)) {
-                $this->body .= $body_part->body . "\n"; // Gather all plain/text which doesn't have an inline or attachment disposition
-            }
-        } elseif (\in_array($mimeType,$this->allowed_mime_types)) {
-            $this->saveFile($filename,$body_part->body, $mimeType);
-        }
-    }
 
     /**
-     * Save off a single file
-     *
-     * @param string $filename (required) The filename to use for this file
-     * @param mixed $contents (required) The contents of the file we will save
-     * @param string $mimeType (required) The mime-type of the file
-     */
-    private function saveFile($filename, $contents, $mimeType = 'unknown')
-    {
-        $filename = \preg_replace('/[^a-zA-Z0-9_-]/','_', $filename);
-
-        $unlocked_and_unique = FALSE;
-        while (!$unlocked_and_unique) {
-            // Find unique
-            $name = \time() . "_" . $filename;
-            while (\file_exists($this->save_directory . $name)) {
-                $name = \time() . "_" . $filename;
-            }
-
-            // Attempt to lock
-            $outFile = \fopen($this->save_directory.$name, 'w');
-            if (\flock($outFile, \LOCK_EX)) {
-                $unlocked_and_unique = TRUE;
-            } else {
-                \flock($outFile, \LOCK_UN);
-                \fclose($outFile);
-            }
-        }
-
-        \fwrite($outFile, $contents);
-        \fclose($outFile);
-
-        // This is for readability for the return e-mail and in the DB
-        $this->saved_files[$name] = Array(
-            'size' => $this->formatBytes(\filesize($this->save_directory.$name)),
-            'mime' => $mimeType
-        );
-    }
-
-    /**
-     * Format Bytes into human-friendly sizes
-     * with the number of bytes in the largest applicable unit (eg. KB, MB, GB, TB)
-     *
-     * @return string 
-     */
-    private function formatBytes($bytes, $precision = 2)
-    {
-        $units = array('B', 'KB', 'MB', 'GB', 'TB');
-
-        $bytes = \max($bytes, 0);
-        $pow = \floor(($bytes ? \log($bytes) : 0) / \log(1024));
-        $pow = \min($pow, \count($units) - 1);
-
-        $bytes /= \pow(1024, $pow);
-
-        return \round($bytes, $precision) . ' ' . $units[$pow];
-    } 
-
-    /**
-     * Save the plain text, subject and sender of an email to the database
+     * Save the html and plain text, receiver, subject and sender of an email to the database
      * @throws \Exception if insert failure
      */
     private function saveToDb()
     {
-        $insert = $this->pdo->prepare("INSERT INTO emails (user, toaddr, sender, fromaddr, date, subject, body) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $insert = $this->pdo->prepare("INSERT INTO emails (user, toaddr, sender, fromaddr, date, subject, plain, html) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
         // Replace non UTF-8 characters with their UTF-8 equivalent, or drop them
         if (!$insert->execute(Array(
@@ -456,7 +313,8 @@ class MailReader
             \mb_convert_encoding($this->from_email, 'UTF-8', 'UTF-8'),
             \mb_convert_encoding($this->date, 'UTF-8', 'UTF-8'),
             \mb_convert_encoding($this->subject, 'UTF-8', 'UTF-8'),
-            \mb_convert_encoding($this->body, 'UTF-8', 'UTF-8')
+            \mb_convert_encoding($this->plain, 'UTF-8', 'UTF-8'),
+            \mb_convert_encoding($this->html, 'UTF-8', 'UTF-8')
         ))) {
             if ($this->debug) {
                 \print_r($insert->errorInfo());
@@ -466,11 +324,12 @@ class MailReader
         $email_id = $this->pdo->lastInsertId();
         unset($insert);
 
-        foreach ($this->saved_files as $f => $data) {
-            $insertFile = $this->pdo->prepare("INSERT INTO files (email, name, size, mime) VALUES (:email, :name, :size, :mime)");
+        foreach ($this->saved_files as $data) {
+            $insertFile = $this->pdo->prepare("INSERT INTO files (email, name, path, size, mime) VALUES (:email, :name, :path, :size, :mime)");
             $insertFile->bindParam(':email', $email_id);
-     	    $convertedFilename = \mb_convert_encoding($f, 'UTF-8', 'UTF-8');
+     	    $convertedFilename = \mb_convert_encoding($data['name'], 'UTF-8', 'UTF-8');
             $insertFile->bindParam(':name', $convertedFilename);
+            $insertFile->bindParam(':path', $data['path']);
             $insertFile->bindParam(':size', $data['size']);
             $insertFile->bindParam(':mime', $data['mime']);
             if (!$insertFile->execute()) {
@@ -491,8 +350,8 @@ class MailReader
         $newmsg = "Thanks! We just received the following ";
         $newmsg .= "files for storage:\n\n";
         $newmsg .= "Filename -- Size\n";
-        foreach ($this->saved_files as $f => $s) {
-            $newmsg .= "$f -- ({$s['size']}) of type {$s['mime']}\n";
+        foreach ($this->saved_files as $s) {
+            $newmsg .= "{$s['name']} -- ({$s['size']}) of type {$s['mime']}\n";
         }
 
         $newmsg .= "\nHope everything looks right. If not,";
@@ -508,7 +367,8 @@ class MailReader
     {
         print "From : $this->from_email\n";
         print "Subject : $this->subject\n";
-        print "Body : $this->body\n";
+        print "PlainBody : $this->plain\n";
+        print "HtmlBody : $this->html\n";
         print "Saved Files : \n";
         print_r($this->saved_files);
     }
