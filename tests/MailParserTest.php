@@ -83,6 +83,7 @@ class MailParserTest extends TestCase
         
         $file = __DIR__ . '/emails/m0002';
         $email = new MailParser(\file_get_contents($file));
+        $email->removeMimeType('audio/caf');
         $expect = '
 Hello,
 

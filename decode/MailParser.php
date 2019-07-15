@@ -195,9 +195,9 @@ class MailParser
                 $this->rawBodyLines = \array_slice($lines, $i);
                 break;
             }
-
-            // start of new header
+            // check is line starting With printable character
             if (\preg_match('/^[A-Za-z]/', $line)) {
+                // start of new header
                 \preg_match('/([^:]+): ?(.*)$/', $line, $matches);
                 $newHeader = \strtolower($matches[1]);
                 $value = $matches[2];
@@ -236,6 +236,19 @@ class MailParser
     {
         if (\strpos($mime_types, '/') !== false)
             \array_push($this->allowedMimeTypes, $mime_types);
+
+        return $this;
+    }
+
+    /**
+     * Add additional disallowed mime types to the list.
+     * 
+     * @param string
+     */
+    public function removeMimeType($mime_types = '')
+    {
+        if (\strpos($mime_types, '/') !== false)
+            \array_push($this->disallowedMimeTypes, $mime_types);
 
         return $this;
     }
