@@ -1,7 +1,7 @@
 mailreader
 ====================================
 
-[![Build Status](https://travis-ci.org/techno-express/mailreader.svg?branch=master)](https://travis-ci.org/techno-express/mailreader)[![codecov](https://codecov.io/gh/techno-express/mailreader/branch/master/graph/badge.svg)](https://codecov.io/gh/techno-express/mailreader)
+[![Build Status](https://travis-ci.org/techno-express/mailreader.svg?branch=master)](https://travis-ci.org/techno-express/mailreader)[![codecov](https://codecov.io/gh/techno-express/mailreader/branch/master/graph/badge.svg)](https://codecov.io/gh/techno-express/mailreader)[![Maintainability](https://api.codeclimate.com/v1/badges/d55439701ae29a2bbab6/maintainability)](https://codeclimate.com/github/techno-express/mailreader/maintainability)
 
 Receive mail and attachments with PHP
 
